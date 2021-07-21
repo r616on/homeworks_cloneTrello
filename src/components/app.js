@@ -1,7 +1,7 @@
-import PopoverWidget from "./Popover-widget/popover-widget";
+import TrelloWidget from "./Trello-Widget/Trello-Widget";
 
 document.addEventListener("DOMContentLoaded", () => {
   const perent = document.querySelector(".conteiner");
-  const widget = new PopoverWidget(perent);
+  const widget = new TrelloWidget(perent);
   widget.bindToDOM();
 });

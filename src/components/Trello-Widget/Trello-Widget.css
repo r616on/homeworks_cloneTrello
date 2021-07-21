@@ -1,0 +1,163 @@
+@font-face {
+  font-family: "Xpress";
+  src: url("../../fonts/Xpress-LightItalic/Xpress-LightItalic.ttf")
+    format("truetype");
+  font-weight: 300;
+  font-style: italic;
+}
+
+.conteiner {
+  margin-top: 50px;
+}
+.Trello-Widget {
+  /* min-height: 800px; */
+}
+.Trello-Widget-row {
+  background-color: #06c;
+  margin: 0 auto;
+  width: 800px;
+  display: flex;
+  align-items: flex-start;
+  min-height: 500px;
+}
+.Trello-Widget-column {
+  flex: 1 1 auto;
+  width: 33%;
+  background-color: #ccc;
+  margin-left: 10px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  font-family: "Xpress";
+  font-size: 16px;
+  color: #366;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  /* height: 100%; */
+}
+.Trello-Widget-column:last-child {
+  margin-right: 10px;
+}
+.column__title {
+  flex: 0 0 auto;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+.column__title-text {
+  font-weight: 600;
+  padding-left: 10px;
+}
+.column__title-text:hover {
+  cursor: default;
+}
+.column__title-badge {
+  margin-top: -15px;
+  font-size: 25px;
+  padding-right: 5px;
+  font-weight: 1;
+}
+.column__title-badge:hover {
+  cursor: pointer;
+}
+.column__body {
+  flex: 1 0 auto;
+}
+.column__footer {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: left;
+}
+.column__footer:hover {
+  cursor: pointer;
+}
+.column__footer-badge {
+  margin-right: 10px;
+}
+.addItem {
+}
+.column__footer-text {
+}
+.cart {
+  background-color: floralwhite;
+  border-radius: 4px;
+  padding: 6px;
+  line-height: 1;
+  margin-bottom: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+.cart:last-child {
+  margin-bottom: 10px;
+}
+.cart:hover {
+  cursor: pointer;
+}
+
+.cart__title {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+.cart__title-text {
+  padding-left: 5px;
+}
+.cart__title-badge {
+  padding-right: 5px;
+}
+.delete:hover,
+.close:hover {
+  color: red;
+  cursor: pointer;
+}
+.cart__body {
+  padding-left: 5px;
+  display: flex;
+}
+.cart__body-item {
+  display: block;
+  height: 25px;
+  font-size: 14px;
+  margin-left: 5px;
+}
+
+.TODO {
+}
+.PROGRESS {
+}
+.DONE {
+}
+
+.add-cart {
+  font-size: 14px;
+  font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
+    "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
+}
+.add-cart__input {
+  margin-bottom: 10px;
+  font-size: 10px;
+  padding: 3px;
+}
+.add-cart__control-row {
+  display: flex;
+  justify-content: left;
+}
+.add-cart__button {
+  display: block;
+  background-color: #6c6;
+  padding: 6px;
+  color: floralwhite;
+  font-weight: 500;
+  border: none;
+  border-radius: 4px;
+  margin-right: 10px;
+}
+.add-cart__close {
+  margin-top: 6px;
+}
+.close {
+}
+.disable {
+  display: none;
+}
