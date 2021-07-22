@@ -139,9 +139,11 @@ export default class TrelloWidget {
     }
     this.widget.addEventListener("click", (evt) => this.onClick(evt));
     this.widget.addEventListener("mousedown", (evt) => this.onMousedown(evt));
+    this.widget.addEventListener("touchstart", (evt) => this.onMousedown(evt));
 
     this.widget.addEventListener("mouseleave", (evt) => this.onMouseleave(evt));
     this.widget.addEventListener("mouseup", (evt) => this.onMouseup(evt));
+    this.widget.addEventListener("touchend", (evt) => this.onMouseup(evt));
   }
 
   onMousedown(evt) {
@@ -158,6 +160,8 @@ export default class TrelloWidget {
       return;
     }
     this.widget.addEventListener("mousemove", (e) => this.onMousemove(e));
+    this.widget.addEventListener("touchmove", (e) => this.onMousemove(e));
+
     this.onCursorGrabbing();
     this.ghostEl = this.draggedEl.cloneNode(true);
     this.draggedEl.classList.add("opaciti");
@@ -249,6 +253,8 @@ export default class TrelloWidget {
     this.widget.removeEventListener("mousemove", (evt) =>
       this.onMousemove(evt)
     );
+    this.widget.removeEventListener("touchmove", (e) => this.onMousemove(e));
+
     this.save();
   }
 
