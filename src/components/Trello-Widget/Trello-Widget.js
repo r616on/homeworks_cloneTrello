@@ -18,6 +18,9 @@ export default class TrelloWidget {
     this.onMouseleave.bind(this);
     this.onMouseup.bind(this);
     this.cleanElemDrop.bind(this);
+    this.onTouchup.bind(this);
+    this.onTouchmove.bind(this);
+    this.onTouchdown.bind(this);
   }
 
   static get markup() {
@@ -139,11 +142,11 @@ export default class TrelloWidget {
     }
     this.widget.addEventListener("click", (evt) => this.onClick(evt));
     this.widget.addEventListener("mousedown", (evt) => this.onMousedown(evt));
-    this.widget.addEventListener("touchstart", (evt) => this.onMousedown(evt));
+    this.widget.addEventListener("touchstart", (evt) => this.onTouchdown(evt));
 
     this.widget.addEventListener("mouseleave", (evt) => this.onMouseleave(evt));
     this.widget.addEventListener("mouseup", (evt) => this.onMouseup(evt));
-    this.widget.addEventListener("touchend", (evt) => this.onMouseup(evt));
+    this.widget.addEventListener("touchend", (evt) => this.onTouchup(evt));
   }
 
   onMousedown(evt) {
@@ -160,7 +163,6 @@ export default class TrelloWidget {
       return;
     }
     this.widget.addEventListener("mousemove", (e) => this.onMousemove(e));
-    this.widget.addEventListener("touchmove", (e) => this.onMousemove(e));
 
     this.onCursorGrabbing();
     this.ghostEl = this.draggedEl.cloneNode(true);
@@ -186,6 +188,45 @@ export default class TrelloWidget {
     this.yCompenc = evt.pageY - this.ghostEl.offsetTop;
   }
 
+  onTouchdown(evt) {
+    // evt.preventDefault();
+    /// Delete Cart
+    if (evt.target.closest(".delete")) {
+      evt.target.closest(".cart").remove();
+      this.save();
+      return;
+    }
+    /// Drag and Drop
+    this.draggedEl = evt.target.closest(".cart");
+    if (!this.draggedEl) {
+      return;
+    }
+    this.widget.addEventListener("touchmove", (e) => this.onTouchmove(e));
+
+    this.onCursorGrabbing();
+    this.ghostEl = this.draggedEl.cloneNode(true);
+    this.draggedEl.classList.add("opaciti");
+
+    this.ghostEl.classList.add("dragged");
+
+    this.parentEl.appendChild(this.ghostEl);
+    /// size element
+    this.ghostEl.style.width = `${
+      this.draggedEl.getBoundingClientRect().width
+    }px`;
+    this.ghostEl.style.height = `${
+      this.draggedEl.getBoundingClientRect().height
+    }px`;
+    /// position on mouseDown
+    this.ghostEl.style.left = `${this.draggedEl.offsetLeft}px`;
+    this.ghostEl.style.top = `${
+      this.draggedEl.offsetTop + this.draggedEl.offsetHeight
+    }px`;
+    /// compensation regarding item
+    this.xCompenc = evt.changedTouches[0].pageX - this.ghostEl.offsetLeft;
+    this.yCompenc = evt.changedTouches[0].pageY - this.ghostEl.offsetTop;
+  }
+
   onMousemove(evt) {
     evt.preventDefault(); // не даём выделять элементы
     if (!this.draggedEl) {
@@ -199,6 +240,35 @@ export default class TrelloWidget {
       .closest(".cart");
     const perent = document
       .elementFromPoint(evt.clientX, evt.clientY)
+      .closest(".column__body");
+    if (closest && perent) {
+      perent.insertBefore(this.draggedEl, closest);
+    } else if (closest === null && perent) {
+      perent.append(this.draggedEl);
+    }
+  }
+
+  onTouchmove(evt) {
+    evt.preventDefault(); // не даём выделять элементы
+    if (!this.draggedEl) {
+      return;
+    }
+    this.ghostEl.style.left = `${
+      evt.changedTouches[0].pageX - this.xCompenc
+    }px`;
+    this.ghostEl.style.top = `${evt.changedTouches[0].pageY - this.yCompenc}px`;
+
+    const closest = document
+      .elementFromPoint(
+        evt.changedTouches[0].clientX,
+        evt.changedTouches[0].clientY
+      )
+      .closest(".cart");
+    const perent = document
+      .elementFromPoint(
+        evt.changedTouches[0].clientX,
+        evt.changedTouches[0].clientY
+      )
       .closest(".column__body");
     if (closest && perent) {
       perent.insertBefore(this.draggedEl, closest);
@@ -222,7 +292,7 @@ export default class TrelloWidget {
     if (!this.draggedEl) {
       return;
     }
-    /// Initial variables
+    /// Initial variable
     const closest = document
       .elementFromPoint(evt.clientX, evt.clientY)
       .closest(".cart");
@@ -235,12 +305,51 @@ export default class TrelloWidget {
 
     if (!closest && !perent) {
       this.cleanElemDrop();
+      this.widget.removeEventListener("mousemove", (e) => this.onMousemove(e));
     } else if (closest && perent) {
       perent.insertBefore(this.draggedEl, closest);
       this.cleanElemDrop();
+      this.widget.removeEventListener("mousemove", (e) => this.onMousemove(e));
     } else if (closest === null && perent) {
       perent.append(this.draggedEl);
       this.cleanElemDrop();
+      this.widget.removeEventListener("mousemove", (e) => this.onMousemove(e));
+    }
+  }
+
+  onTouchup(evt) {
+    /// Event on mouse Up
+    if (!this.draggedEl) {
+      return;
+    }
+    /// Initial variables
+    const closest = document
+      .elementFromPoint(
+        evt.changedTouches[0].clientX,
+        evt.changedTouches[0].clientY
+      )
+      .closest(".cart");
+
+    const perent = document
+      .elementFromPoint(
+        evt.changedTouches[0].clientX,
+        evt.changedTouches[0].clientY
+      )
+      .closest(".column__body");
+
+    /// Insert element
+
+    if (!closest && !perent) {
+      this.cleanElemDrop();
+      this.widget.removeEventListener("touchmove", (e) => this.onTouchmove(e));
+    } else if (closest && perent) {
+      perent.insertBefore(this.draggedEl, closest);
+      this.cleanElemDrop();
+      this.widget.removeEventListener("touchmove", (e) => this.onTouchmove(e));
+    } else if (closest === null && perent) {
+      perent.append(this.draggedEl);
+      this.cleanElemDrop();
+      this.widget.removeEventListener("touchmove", (e) => this.onTouchmove(e));
     }
   }
 
@@ -250,11 +359,6 @@ export default class TrelloWidget {
     this.parentEl.removeChild(this.ghostEl);
     this.ghostEl = null;
     this.draggedEl = null;
-    this.widget.removeEventListener("mousemove", (evt) =>
-      this.onMousemove(evt)
-    );
-    this.widget.removeEventListener("touchmove", (e) => this.onMousemove(e));
-
     this.save();
   }
 
