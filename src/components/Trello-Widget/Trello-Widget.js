@@ -4,10 +4,20 @@ export default class TrelloWidget {
     this.oneAddCart = 0;
     this.data = null;
 
+    this.draggedEl = null;
+    this.ghostEl = null;
+    this.xCompenc = null;
+    this.yCompenc = null;
+
     this.onClick.bind(this);
     this.onButtonClick.bind(this);
     this.onCloseClick.bind(this);
     this.load.bind(this);
+    this.onMousedown.bind(this);
+    this.onMousemove.bind(this);
+    this.onMouseleave.bind(this);
+    this.onMouseup.bind(this);
+    this.cleanElemDrop.bind(this);
   }
 
   static get markup() {
@@ -99,6 +109,7 @@ export default class TrelloWidget {
   static get buttonSelector() {
     return ".add-cart__button";
   }
+
   static get inputSelector() {
     return ".add-cart__input";
   }
@@ -106,16 +117,18 @@ export default class TrelloWidget {
   static get columnTuduSelector() {
     return ".TODU";
   }
+
   static get columnProgressSelector() {
     return ".PROGRESS";
   }
+
   static get columnDoneSelector() {
     return ".DONE";
   }
 
   bindToDOM() {
     this.parentEl.innerHTML = this.constructor.markup;
-    const widget = this.parentEl.querySelector(this.constructor.widgetSelector);
+    this.widget = this.parentEl.querySelector(this.constructor.widgetSelector);
     try {
       this.data = JSON.parse(localStorage.getItem("dataCart"));
       if (this.data !== null) {
@@ -124,13 +137,122 @@ export default class TrelloWidget {
     } catch (e) {
       console.error(e);
     }
-    widget.addEventListener("click", (evt) => this.onClick(evt));
+    this.widget.addEventListener("click", (evt) => this.onClick(evt));
+    this.widget.addEventListener("mousedown", (evt) => this.onMousedown(evt));
+
+    this.widget.addEventListener("mouseleave", (evt) => this.onMouseleave(evt));
+    this.widget.addEventListener("mouseup", (evt) => this.onMouseup(evt));
+  }
+
+  onMousedown(evt) {
+    // evt.preventDefault();
+    /// Delete Cart
+    if (evt.target.closest(".delete")) {
+      evt.target.closest(".cart").remove();
+      this.save();
+      return;
+    }
+    /// Drag and Drop
+    this.draggedEl = evt.target.closest(".cart");
+    if (!this.draggedEl) {
+      return;
+    }
+    this.widget.addEventListener("mousemove", (e) => this.onMousemove(e));
+    this.onCursorGrabbing();
+    this.ghostEl = this.draggedEl.cloneNode(true);
+    this.draggedEl.classList.add("opaciti");
+
+    this.ghostEl.classList.add("dragged");
+
+    this.parentEl.appendChild(this.ghostEl);
+    /// size element
+    this.ghostEl.style.width = `${
+      this.draggedEl.getBoundingClientRect().width
+    }px`;
+    this.ghostEl.style.height = `${
+      this.draggedEl.getBoundingClientRect().height
+    }px`;
+    /// position on mouseDown
+    this.ghostEl.style.left = `${this.draggedEl.offsetLeft}px`;
+    this.ghostEl.style.top = `${
+      this.draggedEl.offsetTop + this.draggedEl.offsetHeight
+    }px`;
+    /// compensation regarding item
+    this.xCompenc = evt.pageX - this.ghostEl.offsetLeft;
+    this.yCompenc = evt.pageY - this.ghostEl.offsetTop;
+  }
+
+  onMousemove(evt) {
+    evt.preventDefault(); // не даём выделять элементы
+    if (!this.draggedEl) {
+      return;
+    }
+    this.ghostEl.style.left = `${evt.pageX - this.xCompenc}px`;
+    this.ghostEl.style.top = `${evt.pageY - this.yCompenc}px`;
+
+    const closest = document
+      .elementFromPoint(evt.clientX, evt.clientY)
+      .closest(".cart");
+    const perent = document
+      .elementFromPoint(evt.clientX, evt.clientY)
+      .closest(".column__body");
+    if (closest && perent) {
+      perent.insertBefore(this.draggedEl, closest);
+    } else if (closest === null && perent) {
+      perent.append(this.draggedEl);
+    }
+  }
+
+  onMouseleave() {
+    // при уходе курсора за границы контейнера - отменяем перенос
+    if (!this.draggedEl) {
+      return;
+    }
+    this.parentEl.removeChild(this.ghostEl);
+    this.ghostEl = null;
+    this.draggedEl = null;
+  }
+
+  onMouseup(evt) {
+    /// Event on mouse Up
+    if (!this.draggedEl) {
+      return;
+    }
+    /// Initial variables
+    const closest = document
+      .elementFromPoint(evt.clientX, evt.clientY)
+      .closest(".cart");
+
+    const perent = document
+      .elementFromPoint(evt.clientX, evt.clientY)
+      .closest(".column__body");
+
+    /// Insert element
+
+    if (!closest && !perent) {
+      this.cleanElemDrop();
+    } else if (closest && perent) {
+      perent.insertBefore(this.draggedEl, closest);
+      this.cleanElemDrop();
+    } else if (closest === null && perent) {
+      perent.append(this.draggedEl);
+      this.cleanElemDrop();
+    }
+  }
+
+  cleanElemDrop() {
+    this.noCursorGrabbing();
+    this.draggedEl.classList.remove("opaciti");
+    this.parentEl.removeChild(this.ghostEl);
+    this.ghostEl = null;
+    this.draggedEl = null;
+    this.widget.removeEventListener("mousemove", (evt) =>
+      this.onMousemove(evt)
+    );
+    this.save();
   }
 
   onClick(e) {
-    const popoverEl = this.parentEl.querySelector(
-      this.constructor.popoverSelector
-    );
     /// Open Add Cart modul
     if (e.target.closest(".column__footer") && !this.oneAddCart) {
       this.oneAddCart = 1;
@@ -141,16 +263,12 @@ export default class TrelloWidget {
     if (e.target.closest(".add-cart__close") && this.oneAddCart) {
       this.onCloseClick(e);
     }
-    ///creete cart click on buttut
+    /// creete cart click on buttut
     if (e.target.closest(this.constructor.buttonSelector)) {
       this.onButtonClick(e);
     }
-    ///Delete Cart
-    if (e.target.closest(".delete")) {
-      e.target.closest(".cart").remove();
-      this.save();
-    }
   }
+
   onCloseClick(e) {
     this.oneAddCart = 0;
     e.target
@@ -159,6 +277,7 @@ export default class TrelloWidget {
       .classList.remove("disable");
     e.target.closest(".add-cart").remove();
   }
+
   onButtonClick(e) {
     const input = this.parentEl.querySelector(this.constructor.inputSelector);
     if (input.checkValidity()) {
@@ -170,9 +289,10 @@ export default class TrelloWidget {
       this.save();
     }
   }
+
   createModul() {
     const addCart = document.createElement("div");
-    addCart.className = "add-cart cart";
+    addCart.className = "add-cart";
     addCart.innerHTML = ` <input class="add-cart__input" placeholder="Введите заголовок" required  type="text">
                           <div class="add-cart__control-row">
                             <button class="add-cart__button" >Add Card</button>
@@ -180,6 +300,7 @@ export default class TrelloWidget {
                            </div>`;
     return addCart;
   }
+
   addCart(text, like = null, comment = null) {
     const addCart = document.createElement("div");
     addCart.className = "cart";
@@ -207,6 +328,7 @@ export default class TrelloWidget {
     }
     return addCart;
   }
+
   save() {
     const tudu = this.parentEl.querySelector(
       this.constructor.columnTuduSelector
@@ -218,14 +340,12 @@ export default class TrelloWidget {
       this.constructor.columnDoneSelector
     );
     function arrMap(perent) {
-      return [...perent.querySelectorAll(".cart")].map((item, index) => {
-        return {
-          index: index,
-          title: item.dataset.title,
-          like: item.dataset.like,
-          comment: item.dataset.comment,
-        };
-      });
+      return [...perent.querySelectorAll(".cart")].map((item, index) => ({
+        index,
+        title: item.dataset.title,
+        like: item.dataset.like,
+        comment: item.dataset.comment,
+      }));
     }
     this.data = {
       tudu: arrMap(tudu),
@@ -234,6 +354,7 @@ export default class TrelloWidget {
     };
     localStorage.setItem("dataCart", JSON.stringify(this.data));
   }
+
   load() {
     const tudu = this.parentEl.querySelector(
       this.constructor.columnTuduSelector
@@ -265,5 +386,19 @@ export default class TrelloWidget {
         .querySelector(".column__body")
         .append(this.addCart(item.title, item.like, item.comment));
     });
+  }
+
+  onCursorGrabbing() {
+    this.parentEl.classList.add("grabbing");
+    [...this.parentEl.querySelectorAll(".cart")].forEach((item) =>
+      item.classList.add("grabbing")
+    );
+  }
+
+  noCursorGrabbing() {
+    this.parentEl.classList.remove("grabbing");
+    [...this.parentEl.querySelectorAll(".cart")].forEach((item) =>
+      item.classList.remove("grabbing")
+    );
   }
 }
